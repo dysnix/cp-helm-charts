@@ -3,12 +3,13 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "cp-ksql-server.fullname" . }}
+  name: {{ $fullName }}
   labels:
     app: {{ template "cp-ksql-server.name" . }}
     chart: {{ template "cp-ksql-server.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -25,14 +26,12 @@ spec:
 {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ . | quote }}
       http:
         paths:
-        {{- range .paths }}
-          - path: {{ . }}
-            backend:
-              serviceName: {{ $fullName }}
-              servicePort: http
-        {{- end }}
+        - path: /
+          backend:
+            serviceName: {{ $fullName }}
+            servicePort: ksql-server
   {{- end }}
 {{- end }}

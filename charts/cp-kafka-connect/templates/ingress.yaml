@@ -3,12 +3,13 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "cp-kafka-connect.fullname" . }}
+  name: {{ $fullName }}
   labels:
     app: {{ template "cp-kafka-connect.name" . }}
     chart: {{ template "cp-kafka-connect.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+  {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -25,14 +26,12 @@ spec:
 {{- end }}
   rules:
   {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ . | quote }}
       http:
         paths:
-        {{- range .paths }}
-          - path: {{ . }}
-            backend:
-              serviceName: {{ $fullName }}
-              servicePort: http
-        {{- end }}
+        - path: /
+          backend:
+            serviceName: {{ $fullName }}
+            servicePort: kafka-connect
   {{- end }}
 {{- end }}
