@@ -99,13 +99,13 @@ resources:
 ## Custom pod annotations
 podAnnotations: {}
 
-## Node labels for pod assignment
+## Pod assignment configuration
 ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
 nodeSelector: {}
 
 ## Taints to tolerate on node assignment:
 ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
-tolerations: {}
+tolerations: []
 
 ## Monitoring
 ## Kafka JMX Settings
