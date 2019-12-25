@@ -79,3 +79,13 @@ Default GroupId to Release Name but allow it to be overridden
 {{- .Release.Name -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Kafka opts
+*/}}
+{{- define "cp-kafka-connect.extraJavaArgs" -}}
+{{- if .Values.extraJavaArgs -}}{{ .Values.extraJavaArgs | join " " }}{{- end -}}
+  {{- if .Values.metrics.enabled -}}
+ -javaagent:/etc/jmx-agent/jmx_prometheus_javaagent-0.12.0.jar=5556:/etc/jmx-kafka-connect/jmx-kafka-connect-prometheus.yml
+  {{- end -}}
+{{- end -}}

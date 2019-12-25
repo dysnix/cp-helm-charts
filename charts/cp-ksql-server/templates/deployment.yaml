@@ -22,53 +22,57 @@ spec:
       labels:
         app: {{ template "cp-ksql-server.name" . }}
         release: {{ .Release.Name }}
-      {{- if or .Values.podAnnotations .Values.prometheus.jmx.enabled .Values.secretConfOverrides }}
+      {{- if or .Values.podAnnotations .Values.metrics.enabled .Values.secretConfOverrides }}
       annotations:
       {{- range $key, $value := .Values.podAnnotations }}
         {{ $key }}: {{ $value | quote }}
       {{- end }}
-      {{- if .Values.prometheus.jmx.enabled }}
+      {{- if and .Values.metrics.enabled (not .Values.metrics.serviceMonitor.enabled) }}
         prometheus.io/scrape: "true"
-        prometheus.io/port: {{ .Values.prometheus.jmx.port | quote }}
+        prometheus.io/port: {{ .Values.metrics.port | quote }}
       {{- end }}
         {{- if .Values.secretConfOverrides }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
+        {{- if .Values.metrics.enabled }}
+        checksum/jmx-configmap: {{ include (print $.Template.BasePath "/jmx-configmap.yaml") . | sha256sum }}
+        {{- end }}
       {{- end }}
     spec:
-      containers:
-        {{- if .Values.prometheus.jmx.enabled }}
-        - name: prometheus-jmx-exporter
-          image: "{{ .Values.prometheus.jmx.image }}:{{ .Values.prometheus.jmx.imageTag }}"
-          imagePullPolicy: "{{ .Values.prometheus.jmx.imagePullPolicy }}"
-          command:
-          - java
-          - -XX:+UnlockExperimentalVMOptions
-          - -XX:+UseCGroupMemoryLimitForHeap
-          - -XX:MaxRAMFraction=1
-          - -XshowSettings:vm
-          - -jar
-          - jmx_prometheus_httpserver.jar
-          - {{ .Values.prometheus.jmx.port | quote }}
-          - /etc/jmx-ksql-server/jmx-ksql-server-prometheus.yml
-          ports:
-          - containerPort: {{ .Values.prometheus.jmx.port }}
-          resources:
-{{ toYaml .Values.prometheus.jmx.resources | indent 12 }}
+      {{- if .Values.metrics.enabled }}
+      initContainers:
+        - name: jmx
+          image: appropriate/curl:latest
+          imagepullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+          {{- $version := .Values.metrics.agent.version }}
+          - >
+              cd /etc/jmx-agent &&
+              curl -sSL --remote-name-all
+              https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/{{ $version }}/jmx_prometheus_javaagent-{{ $version }}.jar{,\.sha1} &&
+              printf "$(cat jmx_prometheus_javaagent-{{ $version }}.jar.sha1)  jmx_prometheus_javaagent-{{ $version }}.jar" | sha1sum -c
           volumeMounts:
+          - name: jmx-agent
+            mountPath: /etc/jmx-agent
           - name: jmx-config
-            mountPath: /etc/jmx-ksql-server
-        {{- end }}
-        - name: {{ template "cp-ksql-server.name" . }}
+            mountPath: /etc/jmx-kafka-connect
+      {{- end }}
+      containers:
+        - name: ksql
           image: "{{ .Values.image }}:{{ .Values.imageTag }}"
           imagePullPolicy: "{{ .Values.imagePullPolicy }}"
           ports:
-            - name: server
-              containerPort: {{ .Values.servicePort}}
+            - name: ksql-server
+              containerPort: 8088
               protocol: TCP
-            {{- if .Values.prometheus.jmx.enabled }}
-            - containerPort: {{ .Values.jmx.port }}
-              name: jmx
+            - name: jmx
+              containerPort: 5555
+              protocol: TCP
+            {{- if .Values.metrics.enabled }}
+            - name: metrics
+              containerPort: 5556
+              protocol: TCP
             {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -106,16 +110,25 @@ spec:
           - name: {{ $key | quote }}
             value: {{ $value | quote }}
           {{- end }}
-          {{- if .Values.jmx.port }}
           - name: KSQL_JMX_PORT
             value: "{{ .Values.jmx.port }}"
+          - name: KSQL_OPTS
+            value: {{ include "cp-ksql-server.extraJavaArgs" . | quote }}
+          volumeMounts:
+          {{- if .Values.metrics.enabled }}
+          - name: jmx-agent
+            mountPath: /etc/jmx-agent
+          - name: jmx-config
+            mountPath: /etc/jmx-kafka-connect
           {{- end }}
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.imagePullSecrets | indent 8 }}
       {{- end }}
       volumes:
-      {{- if .Values.prometheus.jmx.enabled }}
+      {{- if .Values.metrics.enabled }}
+      - name: jmx-agent
+        emptyDir: {}
       - name: jmx-config
         configMap:
           name: {{ template "cp-ksql-server.fullname" . }}-jmx-configmap

@@ -18,7 +18,10 @@ imagePullPolicy: IfNotPresent
 ## ref: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
 imagePullSecrets:
 
-servicePort: 8088
+service:
+  type: ClusterIP
+  port: 8088
+  annotations: {}
 
 ## KSQL JVM Heap Option
 heapOptions: "-Xms512M -Xmx512M"
@@ -54,29 +57,33 @@ tolerations: []
 jmx:
   port: 5555
 
-## Prometheus Exporter Configuration
-## ref: https://prometheus.io/docs/instrumenting/exporters/
-prometheus:
-  ## JMX Exporter Configuration
-  ## ref: https://github.com/prometheus/jmx_exporter
-  jmx:
-    enabled: true
-    image: solsson/kafka-prometheus-jmx-exporter@sha256
-    imageTag: 6f82e2b0464f50da8104acd7363fb9b995001ddff77d248379f8788e78946143
-    imagePullPolicy: IfNotPresent
-    port: 5556
-
-    ## Resources configuration for the JMX exporter container.
-    ## See the `resources` documentation above for details.
-    resources: {}
-
-## External Access
-## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
-external:
+metrics:
   enabled: false
-  type: LoadBalancer
-  externalTrafficPolicy: Cluster
-  port: 8088
+  agent:
+    mavenUrl: https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/
+    version: "0.12.0"
+
+  service:
+    type: ClusterIP
+    port: 5556
+    annotations: {}
+    labels: {}
+
+  # Enable Prometheus Operator PodMonitor to configure scrapping
+  serviceMonitor:
+    enabled: false
+    # Set ServiceMontor TargetLabels to transfer labels on the Kubernetes Service onto the target.
+    targetLabels: []
+    # Set the namespace the PodMonitor should be deployed
+    # namespace: monitoring
+    # Set how frequently Prometheus should scrape
+    # interval: 30s
+    # Set path to cloudwatch-exporter telemtery-path
+    # telemetryPath: /metrics
+    # Set labels for the PodMonitor, use this to define your scrape label for Prometheus Operator
+    # labels:
+    # Set timeout for scrape
+    # timeout: 10s
 
 ## Headless mode
 ## ref: https://docs.confluent.io/current/ksql/docs/installation/server-config/index.html
@@ -105,6 +112,9 @@ secretConfOverrides:
 
 ## Additional env variables
 customEnv: {}
+
+## Extra arguments to pass the JVM
+extraJavaArgs: []
 
 ingress:
   enabled: false

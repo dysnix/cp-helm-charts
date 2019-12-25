@@ -8,9 +8,20 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
+  type: {{ .Values.service.type }}
+  {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+  {{- with .Values.service.loadBalancerSourceRanges }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+  {{- end }}
   ports:
     - name: kafka-connect
-      port: {{ .Values.servicePort }}
+      port: {{ .Values.service.port }}
+      targetPort: kafka-connect
   selector:
     app: {{ template "cp-kafka-connect.name" . }}
     release: {{ .Release.Name }}

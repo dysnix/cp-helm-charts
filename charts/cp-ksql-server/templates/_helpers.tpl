@@ -79,3 +79,13 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- printf "http://%s:8081" (include "cp-ksql-server.cp-schema-registry.fullname" .) -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+KSQL opts
+*/}}
+{{- define "cp-ksql-server.extraJavaArgs" -}}
+{{- if .Values.extraJavaArgs -}}{{ .Values.extraJavaArgs | join " " }}{{- end -}}
+  {{- if .Values.metrics.enabled -}}
+ -javaagent:/etc/jmx-agent/jmx_prometheus_javaagent-0.12.0.jar=5556:/etc/jmx-kafka-connect/jmx-ksql-server-prometheus.yml
+  {{- end -}}
+{{- end -}}

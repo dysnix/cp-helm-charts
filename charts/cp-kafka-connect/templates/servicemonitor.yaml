@@ -1,0 +1,38 @@
+{{- if and ( .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" ) ( .Values.metrics.serviceMonitor.enabled ) }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+{{- if .Values.metrics.serviceMonitor.labels }}
+  labels:
+{{ toYaml .Values.metrics.serviceMonitor.labels | indent 4}}
+{{- end }}
+  name: {{ template "cp-kafka-connect.fullname" . }}
+{{- if .Values.metrics.serviceMonitor.namespace }}
+  namespace: {{ .Values.metrics.serviceMonitor.namespace }}
+{{- end }}
+spec:
+  endpoints:
+  - targetPort: metrics
+{{- if .Values.metrics.serviceMonitor.interval }}
+    interval: {{ .Values.metrics.serviceMonitor.interval }}
+{{- end }}
+
+{{- if .Values.metrics.serviceMonitor.telemetryPath }}
+    path: {{ .Values.metrics.serviceMonitor.telemetryPath }}
+{{- end }}
+{{- if .Values.metrics.serviceMonitor.timeout }}
+    scrapeTimeout: {{ .Values.metrics.serviceMonitor.timeout }}
+{{- end }}
+  jobLabel: {{ include "cp-kafka-connect.fullname" . }}
+  targetLabels:
+  {{- range $label := .Values.metrics.serviceMonitor.targetLabels }}
+    - {{ $label | quote }}
+  {{- end }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      app: {{ template "cp-kafka-connect.name" . }}
+      release: {{ .Release.Name }}
+{{- end }}
