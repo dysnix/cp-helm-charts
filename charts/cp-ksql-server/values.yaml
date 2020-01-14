@@ -67,21 +67,20 @@ metrics:
     type: ClusterIP
     port: 5556
     annotations: {}
-    labels: {}
+    labels:
+      metrics: "true"
 
-  # Enable Prometheus Operator PodMonitor to configure scrapping
+  # Enable Prometheus Operator ServiceMonitor to configure scrapping
   serviceMonitor:
     enabled: false
     # Set ServiceMontor TargetLabels to transfer labels on the Kubernetes Service onto the target.
     targetLabels: []
-    # Set the namespace the PodMonitor should be deployed
+    # Set the namespace the ServiceMonitor should be deployed
     # namespace: monitoring
     # Set how frequently Prometheus should scrape
     # interval: 30s
     # Set path to cloudwatch-exporter telemtery-path
     # telemetryPath: /metrics
-    # Set labels for the PodMonitor, use this to define your scrape label for Prometheus Operator
-    # labels:
     # Set timeout for scrape
     # timeout: 10s
 

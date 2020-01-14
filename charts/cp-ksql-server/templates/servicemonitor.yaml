@@ -16,18 +16,15 @@ spec:
 {{- if .Values.metrics.serviceMonitor.interval }}
     interval: {{ .Values.metrics.serviceMonitor.interval }}
 {{- end }}
-
 {{- if .Values.metrics.serviceMonitor.telemetryPath }}
     path: {{ .Values.metrics.serviceMonitor.telemetryPath }}
 {{- end }}
 {{- if .Values.metrics.serviceMonitor.timeout }}
     scrapeTimeout: {{ .Values.metrics.serviceMonitor.timeout }}
 {{- end }}
-  jobLabel: {{ include "cp-ksql-server.fullname" . }}
+  jobLabel: app
   targetLabels:
-  {{- range $label := .Values.metrics.serviceMonitor.targetLabels }}
-    - {{ $label | quote }}
-  {{- end }}
+    {{- .Values.metrics.serviceMonitor.targetLabels | toYaml | nindent 4 }}
   namespaceSelector:
     matchNames:
     - {{ .Release.Namespace }}
@@ -35,4 +32,5 @@ spec:
     matchLabels:
       app: {{ template "cp-ksql-server.name" . }}
       release: {{ .Release.Name }}
+      metrics: "true"
 {{- end }}
