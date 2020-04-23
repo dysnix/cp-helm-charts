@@ -1,17 +1,4 @@
-[8:50 AM] Vasquez, Jose Manuel
-    
-  
-  
-  
-    
-      
-      
-        Text
-      
-    
-    
-    
-      {{- if .Values.metrics.enabled }}
+{{- if .Values.metrics.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,9 +31,3 @@ data:
         task: $2
         status: $3
 {{- end }}
-    
-    
-  
-  
-
-
