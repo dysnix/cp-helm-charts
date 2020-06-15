@@ -64,6 +64,8 @@ spec:
               value: {{ template "cp-control-center.cp-ksql-server.service-name" . }}
             - name: CONTROL_CENTER_SCHEMA_REGISTRY_URL
               value: {{ template "cp-control-center.cp-schema-registry.service-name" . }}
+            - name: CONTROL_CENTER_CONFLUENT_LICENSE
+              value: {{ .Values.controlcenter.licenseKey | quote }}
             - name: KAFKA_HEAP_OPTS
               value: "{{ .Values.heapOptions }}"
             {{- range $key, $value := .Values.configurationOverrides }}
