@@ -17,6 +17,10 @@ data:
     rules:
     - pattern : "kafka.connect<type=connect-worker-metrics>([^:]+):"
       name: "cp_kafka_connect_connect_worker_metrics_$1"
+    - pattern : "kafka.connect<type=connect-worker-metrics, connector=([^:]+)><>([^:]+):"
+      name: "cp_kafka_connect_connect_worker_metrics_$2"
+      labels:
+        connector: $1
     - pattern : "kafka.connect<type=connect-metrics, client-id=([^:]+)><>([^:]+)"
       name: "cp_kafka_connect_connect_metrics_$1_$2"
     - pattern : "kafka.connect<type=connector-task-metrics, connector=([^:]+), task=([^:]+)><>status: ([^:]+)"
