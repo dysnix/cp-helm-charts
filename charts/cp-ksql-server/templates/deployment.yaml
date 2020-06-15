@@ -43,7 +43,7 @@ spec:
       initContainers:
         - name: jmx
           image: appropriate/curl:latest
-          imagepullPolicy: IfNotPresent
+          imagePullPolicy: IfNotPresent
           command: ["/bin/sh", "-c"]
           args:
           {{- $version := .Values.metrics.agent.version }}

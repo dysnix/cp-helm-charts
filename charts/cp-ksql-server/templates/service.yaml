@@ -21,7 +21,7 @@ spec:
   ports:
     - name: ksql-server
       port: {{ .Values.service.port }}
-      tagrgetPort: ksql-server
+      targetPort: ksql-server
   selector:
     app: {{ template "cp-ksql-server.name" . }}
     release: {{ .Release.Name }}
